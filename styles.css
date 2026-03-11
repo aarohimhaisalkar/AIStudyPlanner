@@ -1,0 +1,563 @@
+/* AI Study Planner - Responsive CSS Styles */
+
+/* ========== GLOBAL STYLES ========== */
+:root {
+    --primary-color: #1f77b4;
+    --secondary-color: #4a9eff;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --border-radius: 10px;
+    --box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    --transition: all 0.3s ease;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+
+/* Mobile Devices (320px - 480px) */
+@media (max-width: 480px) {
+    .stApp {
+        padding: 0.5rem !important;
+    }
+    
+    .main .block-container {
+        padding: 0.5rem !important;
+        max-width: 100% !important;
+    }
+    
+    .stColumns {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .stButton > button {
+        width: 100% !important;
+        margin: 0.25rem 0 !important;
+        padding: 0.75rem !important;
+        font-size: 14px !important;
+    }
+    
+    .stSelectbox > div > div,
+    .stNumberInput > div > div > input,
+    .stTextInput > div > div > input,
+    .stDateInput > div > div > input {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        height: auto !important;
+    }
+    
+    .stForm {
+        margin: 0 !important;
+    }
+    
+    .stForm > div {
+        padding: 0.5rem !important;
+    }
+    
+    .stSidebar {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+    
+    .stDataFrame {
+        font-size: 11px !important;
+    }
+    
+    .dataframe th,
+    .dataframe td {
+        padding: 4px !important;
+        font-size: 11px !important;
+    }
+    
+    h1 {
+        font-size: 1.75rem !important;
+    }
+    
+    h2 {
+        font-size: 1.5rem !important;
+    }
+    
+    h3 {
+        font-size: 1.25rem !important;
+    }
+    
+    .element-container {
+        margin: 0.5rem 0 !important;
+    }
+}
+
+/* Tablet Devices (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .main .block-container {
+        padding: 1rem !important;
+        max-width: 100% !important;
+    }
+    
+    .stColumns {
+        gap: 1rem !important;
+    }
+    
+    .stButton > button {
+        padding: 0.75rem 1.5rem !important;
+        font-size: 14px !important;
+    }
+    
+    .stSidebar {
+        width: 300px !important;
+    }
+    
+    .stDataFrame {
+        font-size: 12px !important;
+    }
+    
+    h1 {
+        font-size: 2rem !important;
+    }
+    
+    h2 {
+        font-size: 1.75rem !important;
+    }
+    
+    h3 {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* Desktop Devices (769px and above) */
+@media (min-width: 769px) {
+    .main .block-container {
+        padding: 2rem !important;
+        max-width: 1200px !important;
+    }
+    
+    .stColumns {
+        gap: 2rem !important;
+    }
+    
+    .stButton > button {
+        padding: 0.75rem 2rem !important;
+        font-size: 16px !important;
+    }
+    
+    .stSidebar {
+        width: 350px !important;
+    }
+}
+
+/* ========== COMPONENT STYLES ========== */
+
+/* Card Styles */
+.card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin: 1rem 0;
+    border-left: 4px solid var(--primary-color);
+    transition: var(--transition);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.card-dark {
+    background: #2d2d2d;
+    color: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    margin: 1rem 0;
+    border-left: 4px solid var(--secondary-color);
+}
+
+/* Progress Bar Customization */
+.stProgress > div > div > div > div {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 5px;
+}
+
+/* Button Styles */
+.stButton > button {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 5px rgba(31, 119, 180, 0.3);
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(31, 119, 180, 0.4);
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+}
+
+.stButton > button:active {
+    transform: translateY(0);
+}
+
+/* Form Elements */
+.stTextInput > div > div > input,
+.stNumberInput > div > div > input,
+.stSelectbox > div > div,
+.stDateInput > div > div > input {
+    border-radius: 8px !important;
+    border: 2px solid #e9ecef !important;
+    transition: var(--transition) !important;
+}
+
+.stTextInput > div > div > input:focus,
+.stNumberInput > div > div > input:focus,
+.stSelectbox > div > div:focus,
+.stDateInput > div > div > input:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(31, 119, 180, 0.1) !important;
+}
+
+/* Expander Customization */
+.streamlit-expanderHeader {
+    background-color: var(--light-color);
+    border-radius: 8px;
+    font-weight: 600;
+    border: 1px solid #e9ecef;
+    transition: var(--transition);
+}
+
+.streamlit-expanderHeader:hover {
+    background-color: #e9ecef;
+}
+
+/* Metric Cards */
+div[data-testid="metric-container"] {
+    background-color: var(--light-color);
+    border: 1px solid #e9ecef;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: var(--transition);
+}
+
+div[data-testid="metric-container"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ========== DARK MODE STYLES ========== */
+.dark-mode {
+    background-color: #1e1e1e;
+    color: white;
+}
+
+.dark-mode .card {
+    background: #2d2d2d;
+    color: white;
+    border-left-color: var(--secondary-color);
+}
+
+.dark-mode div[data-testid="metric-container"] {
+    background-color: #2d2d2d;
+    border-color: #4a4a4a;
+    color: white;
+}
+
+.dark-mode .streamlit-expanderHeader {
+    background-color: #2d2d2d;
+    color: white;
+    border-color: #4a4a4a;
+}
+
+.dark-mode .stTextInput > div > div > input,
+.dark-mode .stNumberInput > div > div > input,
+.dark-mode .stSelectbox > div > div,
+.dark-mode .stDateInput > div > div > input {
+    background-color: #3d3d3d !important;
+    color: white !important;
+    border-color: #4a4a4a !important;
+}
+
+.dark-mode .stTextInput > div > div > input:focus,
+.dark-mode .stNumberInput > div > div > input:focus,
+.dark-mode .stSelectbox > div > div:focus,
+.dark-mode .stDateInput > div > div > input:focus {
+    border-color: var(--secondary-color) !important;
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1) !important;
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.5s ease-in-out;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* ========== LOADING AND SPINNERS ========== */
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========== STATUS MESSAGES ========== */
+.success-message {
+    background: linear-gradient(135deg, var(--success-color), #20c997);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+    font-weight: 500;
+    box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+}
+
+.error-message {
+    background: linear-gradient(135deg, var(--danger-color), #fd7e14);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+    font-weight: 500;
+    box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
+}
+
+.info-message {
+    background: linear-gradient(135deg, var(--info-color), #6c757d);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+    font-weight: 500;
+    box-shadow: 0 2px 10px rgba(23, 162, 184, 0.3);
+}
+
+.warning-message {
+    background: linear-gradient(135deg, var(--warning-color), #fd7e14);
+    color: #212529;
+    padding: 1rem 1.5rem;
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+    font-weight: 500;
+    box-shadow: 0 2px 10px rgba(255, 193, 7, 0.3);
+}
+
+/* ========== SPECIAL COMPONENTS ========== */
+
+/* Study Streak Badge */
+.streak-badge {
+    background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: bold;
+    display: inline-block;
+    margin: 0.5rem 0;
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+    transition: var(--transition);
+}
+
+.streak-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+/* Progress Indicators */
+.progress-ring {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+}
+
+.progress-ring circle {
+    transition: stroke-dashoffset 0.35s;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+/* Chart Container */
+.chart-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin: 1rem 0;
+    transition: var(--transition);
+}
+
+.chart-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.dark-mode .chart-container {
+    background: #2d2d2d;
+    color: white;
+}
+
+/* ========== CUSTOM CHECKBOXES ========== */
+.stCheckbox > div {
+    padding: 0.75rem 0;
+}
+
+.stCheckbox > div > label {
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.stCheckbox > div > label:hover {
+    color: var(--primary-color);
+}
+
+/* ========== TABLE STYLES ========== */
+.dataframe {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+}
+
+.dataframe th {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    font-weight: 600;
+    text-align: left;
+}
+
+.dataframe tr:nth-child(even) {
+    background-color: var(--light-color);
+}
+
+.dark-mode .dataframe tr:nth-child(even) {
+    background-color: #3d3d3d;
+}
+
+.dataframe td {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.dark-mode .dataframe td {
+    border-bottom-color: #4a4a4a;
+    color: white;
+}
+
+/* ========== SIDEBAR STYLES ========== */
+.stSidebar .block-container {
+    padding: 1rem !important;
+}
+
+.stSidebar h1,
+.stSidebar h2,
+.stSidebar h3 {
+    color: var(--primary-color);
+}
+
+.dark-mode .stSidebar {
+    background-color: #1a1a1a;
+}
+
+.dark-mode .stSidebar h1,
+.dark-mode .stSidebar h2,
+.dark-mode .stSidebar h3 {
+    color: var(--secondary-color);
+}
+
+/* ========== FOOTER STYLES ========== */
+.app-footer {
+    text-align: center;
+    color: #6c757d;
+    padding: 2rem;
+    margin-top: 3rem;
+    border-top: 1px solid #e9ecef;
+    font-size: 0.9rem;
+}
+
+.dark-mode .app-footer {
+    color: #adb5bd;
+    border-top-color: #4a4a4a;
+}
+
+/* ========== ACCESSIBILITY ========== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus indicators for better accessibility */
+.stButton > button:focus,
+.stTextInput > div > div > input:focus,
+.stNumberInput > div > div > input:focus,
+.stSelectbox > div > div:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* ========== PRINT STYLES ========== */
+@media print {
+    .stSidebar,
+    .stButton,
+    .stCheckbox {
+        display: none !important;
+    }
+    
+    .main .block-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    .chart-container {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+    }
+}
