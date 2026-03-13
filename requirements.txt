@@ -1,57 +1,25 @@
-# AI Study Planner - Python Dependencies
+# AI Study Planner - Essential Dependencies Only
 
 # Core Framework
 streamlit==1.29.0
 
-# Data Processing & Analysis
+# Data Processing
 pandas==2.1.4
-numpy==1.24.4
 
 # Data Visualization
 plotly==5.17.0
-altair==5.2.0
 
 # AI & Machine Learning
 openai==1.3.7
 
-# Date & Time Handling
-python-dateutil==2.8.2
-
-# Database - PostgreSQL
-psycopg2-binary==2.9.7
+# Database
 sqlalchemy==2.0.23
-
-# File Operations & Data Storage
-jsonschema==4.20.0
 
 # Environment Variables
 python-dotenv==1.0.0
 
-# HTTP Requests (for API calls)
+# HTTP Requests
 requests==2.31.0
 
-# Data Validation
-pydantic==2.5.2
-
-# Utility Libraries
-typing-extensions==4.8.0
-
-# Optional: For enhanced UI components
-streamlit-extras==0.3.0
-
-# Optional: For advanced charts
-streamlit-plotly-events==0.0.6
-
-# Optional: For session state management
-streamlit-javascript==0.1.0
-
-# Development & Testing (optional)
-pytest==7.4.3
-pytest-streamlit==0.1.0
-
-# Documentation (optional)
-sphinx==7.2.6
-
-# Code Formatting (optional)
-black==23.11.0
-flake8==6.1.0
+# Date & Time
+python-dateutil==2.8.2
