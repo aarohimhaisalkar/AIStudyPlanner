@@ -1,0 +1,182 @@
+{
+  "user_id": "ce32a20a710a",
+  "created_at": "2026-03-11T15:55:25.929958",
+  "last_updated": "2026-03-11T15:55:25.929958",
+  "study_plans": [],
+  "current_study_plan": null,
+  "study_history": [],
+  "preferences": {
+    "theme": "light",
+    "notifications": true,
+    "reminder_time": "09:00",
+    "study_preference": "Flexible"
+  },
+  "statistics": {
+    "total_study_hours": 0,
+    "total_tasks_completed": 0,
+    "study_streak": 0,
+    "longest_streak": 0,
+    "subjects_studied": []
+  },
+  "study_plan": {
+    "daily_schedule": [
+      {
+        "time": "06:00 - 06:30",
+        "activity": "Wake up & Morning Routine",
+        "category": "Personal",
+        "description": "Start the day fresh"
+      },
+      {
+        "time": "06:30 - 07:00",
+        "activity": "Exercise",
+        "category": "Health",
+        "description": "Physical activity for energy"
+      },
+      {
+        "time": "07:00 - 08:00",
+        "activity": "Breakfast",
+        "category": "Meal",
+        "description": "Healthy breakfast to fuel the brain"
+      },
+      {
+        "time": "09:00 - 10:30",
+        "subject": "ML,",
+        "topic": "Study Session 1",
+        "activity": "Study new concepts",
+        "category": "Study"
+      },
+      {
+        "time": "12:30 - 13:30",
+        "activity": "Lunch",
+        "category": "Meal",
+        "description": "Midday meal break"
+      },
+      {
+        "time": "14:00 - 16:00",
+        "subject": "DL,",
+        "topic": "Study Session 2",
+        "activity": "Practice problems",
+        "category": "Study"
+      },
+      {
+        "time": "16:00 - 17:00",
+        "activity": "Leisure Time",
+        "category": "Leisure",
+        "description": "Relax and recharge"
+      },
+      {
+        "time": "19:00 - 20:00",
+        "activity": "Dinner",
+        "category": "Meal",
+        "description": "Evening meal"
+      },
+      {
+        "time": "20:00 - 21:00",
+        "activity": "Personal Time",
+        "category": "Personal",
+        "description": "Hobbies and relaxation"
+      },
+      {
+        "time": "22:00 - 06:00",
+        "activity": "Sleep",
+        "category": "Personal",
+        "description": "Rest for 8.0 hours"
+      }
+    ],
+    "daily_tasks": [
+      {
+        "subject": "ML,",
+        "description": "Complete ML, exercises",
+        "duration": 1.5,
+        "priority": "High",
+        "completed": false,
+        "category": "Study"
+      },
+      {
+        "subject": "DL,",
+        "description": "Review DL, notes",
+        "duration": 1.0,
+        "priority": "Medium",
+        "completed": false,
+        "category": "Study"
+      }
+    ],
+    "daily_activities": {
+      "sleep_schedule": {
+        "bedtime": "22:00",
+        "wake_time": "06:00",
+        "total_hours": 8.0
+      },
+      "meal_times": [
+        {
+          "meal": "Breakfast",
+          "time": "07:00 - 08:00",
+          "duration": 1
+        },
+        {
+          "meal": "Lunch",
+          "time": "12:30 - 13:30",
+          "duration": 1
+        },
+        {
+          "meal": "Dinner",
+          "time": "19:00 - 20:00",
+          "duration": 1
+        }
+      ],
+      "exercise": {
+        "time": "06:30 - 07:00",
+        "duration": 0.5,
+        "type": "Morning workout"
+      },
+      "leisure_time": {
+        "time": "16:00 - 17:00",
+        "duration": 1.0,
+        "activities": [
+          "Games",
+          "Hobbies",
+          "Relaxation"
+        ]
+      },
+      "personal_time": {
+        "time": "20:00 - 21:00",
+        "duration": 1.0,
+        "activities": [
+          "Reading",
+          "Meditation",
+          "Hobbies"
+        ]
+      }
+    },
+    "study_tips": [
+      "Use the Pomodoro technique for better focus",
+      "Schedule study sessions during your peak energy hours (Morning)",
+      "Take regular breaks to maintain concentration",
+      "Get 8.0 hours of sleep for optimal learning"
+    ],
+    "break_schedule": [
+      {
+        "time": "10:30 - 10:45",
+        "activity": "Short break and stretch"
+      },
+      {
+        "time": "15:30 - 15:45",
+        "activity": "Quick walk and refresh"
+      }
+    ],
+    "subjects": [
+      "ML,",
+      "DL,",
+      "SQL,",
+      "React,",
+      "Python"
+    ],
+    "daily_hours": 4,
+    "days_until_exam": 24,
+    "sleep_hours": 8.0,
+    "meal_time": 2.0,
+    "play_time": 1.0,
+    "exercise_time": 0.5,
+    "personal_time": 1.0
+  }
+}

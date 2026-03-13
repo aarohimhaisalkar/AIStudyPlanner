@@ -1,574 +1,587 @@
-"""
-Utility functions for AI Study Planner
-Contains helper functions for validation, styling, exports, and more.
-"""
-
-import streamlit as st
-import pandas as pd
+import json
+import os
+import csv
 import io
 from datetime import datetime, timedelta
 import random
-from typing import Dict, List, Any
+import hashlib
 
-def load_css():
-    """
-    Load custom CSS for responsive design and styling.
-    """
-    css = """
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .stColumns {
-            flex-direction: column !important;
-        }
-        
-        .stSidebar {
-            width: 100% !important;
-        }
-        
-        .main .block-container {
-            padding: 1rem !important;
-        }
-        
-        .stForm {
-            margin: 0 !important;
-        }
-        
-        .stDataFrame {
-            font-size: 12px !important;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .stButton > button {
-            width: 100% !important;
-            margin: 0.25rem 0 !important;
-        }
-        
-        .stSelectbox > div > div {
-            font-size: 14px !important;
-        }
-        
-        .stNumberInput > div > div > input {
-            font-size: 14px !important;
-        }
-    }
-    
-    /* Card Styles */
-    .card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin: 1rem 0;
-        border-left: 4px solid #1f77b4;
-    }
-    
-    .card-dark {
-        background: #2d2d2d;
-        color: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        margin: 1rem 0;
-        border-left: 4px solid #4a9eff;
-    }
-    
-    /* Progress Bar Customization */
-    .stProgress > div > div > div > div {
-        background: linear-gradient(90deg, #1f77b4, #4a9eff);
-    }
-    
-    /* Button Hover Effects */
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(31, 119, 180, 0.3);
-        transition: all 0.3s ease;
-    }
-    
-    /* Expander Customization */
-    .streamlit-expanderHeader {
-        background-color: #f0f2f6;
-        border-radius: 8px;
-        font-weight: 600;
-    }
-    
-    /* Metric Cards */
-    div[data-testid="metric-container"] {
-        background-color: #f8f9fa;
-        border: 1px solid #e9ecef;
-        padding: 1rem;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    /* Dark Mode Styles */
-    .dark-mode {
-        background-color: #1e1e1e;
-        color: white;
-    }
-    
-    .dark-mode .card {
-        background: #2d2d2d;
-        color: white;
-        border-left-color: #4a9eff;
-    }
-    
-    .dark-mode div[data-testid="metric-container"] {
-        background-color: #2d2d2d;
-        border-color: #4a4a4a;
-        color: white;
-    }
-    
-    .dark-mode .streamlit-expanderHeader {
-        background-color: #2d2d2d;
-        color: white;
-    }
-    
-    /* Animations */
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .fade-in {
-        animation: fadeIn 0.5s ease-in-out;
-    }
-    
-    /* Custom Checkbox Styles */
-    .stCheckbox > div {
-        padding: 0.5rem 0;
-    }
-    
-    /* Responsive Tables */
-    @media (max-width: 640px) {
-        .dataframe {
-            font-size: 11px !important;
-        }
-        
-        .dataframe th {
-            padding: 4px !important;
-        }
-        
-        .dataframe td {
-            padding: 4px !important;
-        }
-    }
-    
-    /* Loading Animation */
-    .loading-spinner {
-        border: 3px solid #f3f3f3;
-        border-top: 3px solid #1f77b4;
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        animation: spin 1s linear infinite;
-        margin: 20px auto;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    /* Success/Error Messages */
-    .success-message {
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-        font-weight: 500;
-    }
-    
-    .error-message {
-        background: linear-gradient(135deg, #dc3545, #fd7e14);
-        color: white;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-        font-weight: 500;
-    }
-    
-    /* Study Streak Badge */
-    .streak-badge {
-        background: linear-gradient(135deg, #ff6b6b, #ffd93d);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-weight: bold;
-        display: inline-block;
-        margin: 0.5rem 0;
-    }
-    
-    /* Responsive Form Elements */
-    @media (max-width: 768px) {
-        .stForm > div {
-            padding: 0.5rem !important;
-        }
-        
-        .stTextInput > div > div > input,
-        .stNumberInput > div > div > input,
-        .stDateInput > div > div > input {
-            font-size: 16px !important; /* Prevents zoom on iOS */
-        }
-    }
-    
-    /* Chart Container */
-    .chart-container {
-        background: white;
-        padding: 1rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin: 1rem 0;
-    }
-    
-    .dark-mode .chart-container {
-        background: #2d2d2d;
-        color: white;
-    }
-    """
-    
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+# Data storage file
+USER_DATA_FILE = "user_data.json"
 
-def validate_inputs(subject: str, total_topics: int, exam_date: datetime.date, 
-                   hours_per_day: int) -> bool:
+def load_user_data():
     """
-    Validate user inputs for the study plan form.
-    
-    Args:
-        subject: Subject name
-        total_topics: Number of topics
-        exam_date: Exam date
-        hours_per_day: Hours available per day
+    Load user data from JSON file
     
     Returns:
-        True if all inputs are valid, False otherwise
+        dict: User data dictionary
     """
-    if not subject or subject.strip() == "":
-        st.error("❌ Please enter a subject name.")
-        return False
     
-    if total_topics < 1:
-        st.error("❌ Total topics must be at least 1.")
-        return False
-    
-    if total_topics > 100:
-        st.error("❌ Total topics cannot exceed 100.")
-        return False
-    
-    if exam_date <= datetime.now().date():
-        st.error("❌ Exam date must be in the future.")
-        return False
-    
-    if hours_per_day < 1 or hours_per_day > 12:
-        st.error("❌ Hours per day must be between 1 and 12.")
-        return False
-    
-    # Check if exam date is too far in the future
-    days_until_exam = (exam_date - datetime.now().date()).days
-    if days_until_exam > 365:
-        st.error("❌ Exam date cannot be more than 365 days from now.")
-        return False
-    
-    return True
+    try:
+        if os.path.exists(USER_DATA_FILE):
+            with open(USER_DATA_FILE, 'r') as f:
+                return json.load(f)
+        else:
+            # Return default user data structure
+            return create_default_user_data()
+    except Exception as e:
+        print(f"Error loading user data: {str(e)}")
+        return create_default_user_data()
 
-def calculate_progress(completed_topics: List[str], total_topics: int) -> Dict[str, Any]:
+def save_user_data(user_data):
     """
-    Calculate study progress statistics.
+    Save user data to JSON file
     
     Args:
-        completed_topics: List of completed topic identifiers
-        total_topics: Total number of topics
+        user_data (dict): User data to save
+    """
+    
+    try:
+        with open(USER_DATA_FILE, 'w') as f:
+            json.dump(user_data, f, indent=2)
+        return True
+    except Exception as e:
+        print(f"Error saving user data: {str(e)}")
+        return False
+
+def create_default_user_data():
+    """
+    Create default user data structure
     
     Returns:
-        Dictionary with progress statistics
+        dict: Default user data
     """
-    if total_topics == 0:
-        return {
-            'completed': 0,
-            'remaining': 0,
-            'percentage': 0.0,
-            'status': 'No topics'
-        }
-    
-    completed = len(completed_topics)
-    remaining = total_topics - completed
-    percentage = (completed / total_topics) * 100
-    
-    if percentage == 0:
-        status = 'Not Started'
-    elif percentage < 25:
-        status = 'Just Beginning'
-    elif percentage < 50:
-        status = 'Making Progress'
-    elif percentage < 75:
-        status = 'Halfway There'
-    elif percentage < 100:
-        status = 'Almost Done'
-    else:
-        status = 'Completed'
     
     return {
-        'completed': completed,
-        'remaining': remaining,
-        'percentage': round(percentage, 1),
-        'status': status
+        "user_id": generate_user_id(),
+        "created_at": datetime.now().isoformat(),
+        "last_updated": datetime.now().isoformat(),
+        "study_plans": [],
+        "current_study_plan": None,
+        "study_history": [],
+        "preferences": {
+            "theme": "light",
+            "notifications": True,
+            "reminder_time": "09:00",
+            "study_preference": "Flexible"
+        },
+        "statistics": {
+            "total_study_hours": 0,
+            "total_tasks_completed": 0,
+            "study_streak": 0,
+            "longest_streak": 0,
+            "subjects_studied": []
+        }
     }
 
-def get_motivational_quote() -> str:
+def generate_user_id():
     """
-    Get a random motivational quote for studying.
+    Generate a unique user ID
     
     Returns:
-        Motivational quote string
+        str: Unique user ID
     """
+    
+    timestamp = str(datetime.now().timestamp())
+    random_num = str(random.randint(1000, 9999))
+    return hashlib.md5((timestamp + random_num).encode()).hexdigest()[:12]
+
+def get_motivational_quote():
+    """
+    Get a random motivational quote
+    
+    Returns:
+        str: Motivational quote
+    """
+    
     quotes = [
-        "The expert in anything was once a beginner.",
-        "Success is the sum of small efforts repeated day in and day out.",
-        "Don't watch the clock; do what it does. Keep going.",
-        "The future depends on what you do today.",
-        "Education is the passport to the future.",
-        "Learning never exhausts the mind.",
-        "The beautiful thing about learning is that nobody can take it away from you.",
-        "A little progress each day adds up to big results.",
-        "Study hard, dream big.",
-        "Your limitation—it's only your imagination.",
-        "Great things never come from comfort zones.",
-        "Dream it. Wish it. Do it.",
-        "Success doesn't just find you. You have to go out and get it.",
-        "The harder you work, the luckier you get.",
-        "Dream bigger. Do bigger.",
-        "Don't stop when you're tired. Stop when you're done.",
-        "Wake up with determination. Go to bed with satisfaction.",
-        "Do something today that your future self will thank you for.",
-        "Little things make big days.",
-        "It's going to be hard, but hard does not mean impossible."
+        "The expert in anything was once a beginner. - Helen Hayes",
+        "Success is the sum of small efforts repeated day in and day out. - Robert Collier",
+        "Your future is created by what you do today, not tomorrow. - Robert T. Kiyosaki",
+        "Education is the passport to the future, for tomorrow belongs to those who prepare for it today. - Malcolm X",
+        "Believe you can and you're halfway there. - Theodore Roosevelt",
+        "The beautiful thing about learning is that nobody can take it away from you. - B.B. King",
+        "A person who never made a mistake never tried anything new. - Albert Einstein",
+        "The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice. - Brian Herbert",
+        "Learning never exhausts the mind. - Leonardo da Vinci",
+        "The more that you read, the more things you will know. - Dr. Seuss",
+        "Education is not preparation for life; education is life itself. - John Dewey",
+        "Live as if you were to die tomorrow. Learn as if you were to live forever. - Mahatma Gandhi",
+        "The mind is not a vessel to be filled, but a fire to be kindled. - Plutarch",
+        "Education's purpose is to replace an empty mind with an open one. - Malcolm Forbes",
+        "The only person who is educated is the one who has learned how to learn and change. - Carl Rogers"
     ]
     
     return random.choice(quotes)
 
-def export_to_csv(study_plan: Dict[str, Any]) -> str:
+def export_study_plan_csv(study_plan):
     """
-    Export study plan to CSV format.
+    Export study plan to CSV format
     
     Args:
-        study_plan: Study plan dictionary
-    
+        study_plan (dict): Study plan data
+        
     Returns:
-        CSV string
+        str: CSV data as string
     """
-    output = io.StringIO()
     
-    # Write header information
-    output.write("AI Study Planner Export\n")
-    output.write(f"Subject,{study_plan['subject']}\n")
-    output.write(f"Total Topics,{study_plan['total_topics']}\n")
-    output.write(f"Exam Date,{study_plan['exam_date']}\n")
-    output.write(f"Days Until Exam,{study_plan['days_until_exam']}\n")
-    output.write(f"Hours Per Day,{study_plan['hours_per_day']}\n")
-    output.write(f"Difficulty,{study_plan['difficulty']}\n")
-    output.write(f"Created At,{study_plan['created_at']}\n")
-    output.write("\n")
-    
-    # Write daily plan
-    output.write("Daily Study Plan\n")
-    output.write("Day,Date,Topics,Topic Count,Estimated Hours\n")
-    
-    for day_info in study_plan['daily_plan']:
-        topics_str = "; ".join(day_info['topics'])
-        output.write(f"{day_info['day']},{day_info['date']},\"{topics_str}\",{day_info['topics_count']},{day_info['estimated_hours']}\n")
-    
-    # Write study tips
-    if 'study_tips' in study_plan:
-        output.write("\n")
-        output.write("Study Tips\n")
-        output.write("Tip\n")
-        for tip in study_plan['study_tips']:
-            output.write(f"\"{tip}\"\n")
-    
-    return output.getvalue()
+    try:
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(['Subject', 'Task Description', 'Duration (hours)', 'Priority', 'Status', 'Time'])
+        
+        # Write tasks
+        daily_tasks = study_plan.get('daily_tasks', [])
+        for task in daily_tasks:
+            status = 'Completed' if task.get('completed', False) else 'Pending'
+            writer.writerow([
+                task.get('subject', 'N/A'),
+                task.get('description', 'N/A'),
+                task.get('duration', 0),
+                task.get('priority', 'Medium'),
+                status,
+                task.get('time', 'N/A')
+            ])
+        
+        # Add study tips section
+        writer.writerow([])
+        writer.writerow(['Study Tips'])
+        study_tips = study_plan.get('study_tips', [])
+        for tip in study_tips:
+            writer.writerow(['', tip])
+        
+        # Add metadata
+        writer.writerow([])
+        writer.writerow(['Study Plan Metadata'])
+        writer.writerow(['Daily Hours', study_plan.get('daily_hours', 0)])
+        writer.writerow(['Days Until Exam', study_plan.get('days_until_exam', 0)])
+        writer.writerow(['Priority Level', study_plan.get('priority_level', 'Medium')])
+        writer.writerow(['Difficulty Level', study_plan.get('difficulty_level', 'Intermediate')])
+        writer.writerow(['Generated Date', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
+        
+        return output.getvalue()
+        
+    except Exception as e:
+        print(f"Error exporting CSV: {str(e)}")
+        return "Error exporting study plan"
 
-def export_to_excel(study_plan: Dict[str, Any]) -> bytes:
+def calculate_study_progress(user_data):
     """
-    Export study plan to Excel format.
+    Calculate overall study progress
     
     Args:
-        study_plan: Study plan dictionary
-    
+        user_data (dict): User data
+        
     Returns:
-        Excel file bytes
+        float: Progress percentage
     """
-    output = io.BytesIO()
     
-    # Create Excel writer
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        # Summary sheet
-        summary_data = {
-            'Detail': ['Subject', 'Total Topics', 'Exam Date', 'Days Until Exam', 
-                      'Hours Per Day', 'Difficulty', 'Total Study Hours', 
-                      'Average Topics Per Day', 'Created At'],
-            'Value': [
-                study_plan['subject'],
-                study_plan['total_topics'],
-                study_plan['exam_date'],
-                study_plan['days_until_exam'],
-                study_plan['hours_per_day'],
-                study_plan['difficulty'],
-                study_plan.get('total_study_hours', 0),
-                study_plan.get('avg_topics_per_day', 0),
-                study_plan['created_at']
-            ]
-        }
-        summary_df = pd.DataFrame(summary_data)
-        summary_df.to_excel(writer, sheet_name='Summary', index=False)
+    try:
+        current_plan = user_data.get('current_study_plan') or user_data.get('study_plan')
         
-        # Daily plan sheet
-        daily_data = []
-        for day_info in study_plan['daily_plan']:
-            for topic in day_info['topics']:
-                daily_data.append({
-                    'Day': day_info['day'],
-                    'Date': day_info['date'],
-                    'Topic': topic,
-                    'Estimated Hours': day_info['estimated_hours'] / len(day_info['topics']),
-                    'Difficulty': day_info['difficulty']
-                })
+        if not current_plan:
+            return 0.0
         
-        if daily_data:
-            daily_df = pd.DataFrame(daily_data)
-            daily_df.to_excel(writer, sheet_name='Daily Plan', index=False)
+        daily_tasks = current_plan.get('daily_tasks', [])
+        if not daily_tasks:
+            return 0.0
         
-        # Study tips sheet
-        if 'study_tips' in study_plan:
-            tips_data = {'Study Tips': study_plan['study_tips']}
-            tips_df = pd.DataFrame(tips_data)
-            tips_df.to_excel(writer, sheet_name='Study Tips', index=False)
-    
-    return output.getvalue()
+        completed_tasks = sum(1 for task in daily_tasks if task.get('completed', False))
+        total_tasks = len(daily_tasks)
+        
+        progress = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0.0
+        return round(progress, 1)
+        
+    except Exception as e:
+        print(f"Error calculating progress: {str(e)}")
+        return 0.0
 
-def format_study_time(hours: float) -> str:
+def format_duration(hours):
     """
-    Format study time in human-readable format.
+    Format duration in hours to human-readable format
     
     Args:
-        hours: Hours as float
-    
+        hours (float): Duration in hours
+        
     Returns:
-        Formatted time string
+        str: Formatted duration
     """
-    if hours < 1:
+    
+    if hours >= 1:
+        return f"{hours:.1f}h"
+    else:
         minutes = int(hours * 60)
-        return f"{minutes} minutes"
-    elif hours == 1:
-        return "1 hour"
-    elif hours < 2:
-        return f"{hours:.1f} hours"
-    else:
-        return f"{int(hours)} hours"
+        return f"{minutes}m"
 
-def get_difficulty_color(difficulty: str) -> str:
+def get_priority_color(priority):
     """
-    Get color code for difficulty level.
+    Get color for priority level
     
     Args:
-        difficulty: Difficulty string
-    
+        priority (str): Priority level
+        
     Returns:
-        Color hex code
+        str: Color code
     """
-    colors = {
-        "Easy": "#28a745",
-        "Medium": "#ffc107", 
-        "Hard": "#dc3545"
+    
+    priority_colors = {
+        'Low': '#28a745',      # Green
+        'Medium': '#ffc107',   # Yellow
+        'High': '#fd7e14',     # Orange
+        'Urgent': '#dc3545'    # Red
     }
-    return colors.get(difficulty, "#6c757d")
+    
+    return priority_colors.get(priority, '#6c757d')  # Default gray
 
-def get_progress_color(percentage: float) -> str:
+def validate_date_format(date_string):
     """
-    Get color based on progress percentage.
+    Validate and parse date string
     
     Args:
-        percentage: Progress percentage (0-100)
-    
+        date_string (str): Date string to validate
+        
     Returns:
-        Color hex code
+        tuple: (is_valid, datetime_object or None)
     """
-    if percentage < 25:
-        return "#dc3545"  # Red
-    elif percentage < 50:
-        return "#fd7e14"  # Orange
-    elif percentage < 75:
-        return "#ffc107"  # Yellow
-    elif percentage < 100:
-        return "#20c997"  # Teal
-    else:
-        return "#28a745"  # Green
+    
+    try:
+        date_obj = datetime.strptime(date_string, '%Y-%m-%d')
+        return True, date_obj
+    except ValueError:
+        try:
+            # Try other common formats
+            date_obj = datetime.strptime(date_string, '%Y/%m/%d')
+            return True, date_obj
+        except ValueError:
+            return False, None
 
-def create_study_calendar(study_plan: Dict[str, Any]) -> pd.DataFrame:
+def calculate_study_statistics(user_data):
     """
-    Create a calendar view of the study plan.
+    Calculate comprehensive study statistics
     
     Args:
-        study_plan: Study plan dictionary
-    
+        user_data (dict): User data
+        
     Returns:
-        DataFrame with calendar data
+        dict: Study statistics
     """
-    calendar_data = []
     
-    for day_info in study_plan['daily_plan']:
-        calendar_data.append({
-            'Date': pd.to_datetime(day_info['date']),
-            'Day': day_info['day'],
-            'Topics': len(day_info['topics']),
-            'Hours': day_info['estimated_hours'],
-            'Subject': study_plan['subject']
-        })
-    
-    return pd.DataFrame(calendar_data)
-
-def calculate_study_statistics(study_plan: Dict[str, Any], 
-                             completed_topics: List[str]) -> Dict[str, Any]:
-    """
-    Calculate comprehensive study statistics.
-    
-    Args:
-        study_plan: Study plan dictionary
-        completed_topics: List of completed topic identifiers
-    
-    Returns:
-        Dictionary with statistics
-    """
-    total_topics = study_plan['total_topics']
-    completed_count = len(completed_topics)
-    
-    # Basic progress
-    progress_percentage = (completed_count / total_topics * 100) if total_topics > 0 else 0
-    
-    # Time statistics
-    total_hours = study_plan.get('total_study_hours', 0)
-    completed_hours = (completed_count / total_topics * total_hours) if total_topics > 0 else 0
-    remaining_hours = total_hours - completed_hours
-    
-    # Daily statistics
-    daily_plan = study_plan['daily_plan']
-    avg_topics_per_day = study_plan.get('avg_topics_per_day', 0)
-    total_days = len(daily_plan)
-    
-    # Completion rate
-    days_passed = min(len(completed_topics) // avg_topics_per_day, total_days) if avg_topics_per_day > 0 else 0
-    days_remaining = total_days - days_passed
-    
-    return {
-        'progress_percentage': round(progress_percentage, 1),
-        'completed_topics': completed_count,
-        'remaining_topics': total_topics - completed_count,
-        'total_hours': total_hours,
-        'completed_hours': round(completed_hours, 1),
-        'remaining_hours': round(remaining_hours, 1),
-        'total_days': total_days,
-        'days_passed': days_passed,
-        'days_remaining': days_remaining,
-        'avg_topics_per_day': avg_topics_per_day,
-        'study_pace': 'On Track' if progress_percentage >= (days_passed / total_days * 100) else 'Behind Schedule'
+    stats = {
+        'total_tasks': 0,
+        'completed_tasks': 0,
+        'completion_rate': 0,
+        'total_study_hours': 0,
+        'subjects_count': 0,
+        'study_streak': 0,
+        'avg_daily_hours': 0
     }
+    
+    try:
+        current_plan = user_data.get('current_study_plan') or user_data.get('study_plan')
+        
+        if current_plan:
+            # Task statistics
+            daily_tasks = current_plan.get('daily_tasks', [])
+            stats['total_tasks'] = len(daily_tasks)
+            stats['completed_tasks'] = sum(1 for task in daily_tasks if task.get('completed', False))
+            stats['completion_rate'] = (stats['completed_tasks'] / stats['total_tasks'] * 100) if stats['total_tasks'] > 0 else 0
+            
+            # Time statistics
+            daily_hours = current_plan.get('daily_hours', 0)
+            days_until_exam = current_plan.get('days_until_exam', 0)
+            stats['total_study_hours'] = daily_hours * days_until_exam
+            stats['avg_daily_hours'] = daily_hours
+            
+            # Subject statistics
+            subjects = current_plan.get('subjects', [])
+            stats['subjects_count'] = len(subjects)
+        
+        # Study streak (simplified calculation)
+        stats['study_streak'] = user_data.get('statistics', {}).get('study_streak', 0)
+        
+    except Exception as e:
+        print(f"Error calculating statistics: {str(e)}")
+    
+    return stats
+
+def create_study_reminder(user_data):
+    """
+    Create a study reminder message
+    
+    Args:
+        user_data (dict): User data
+        
+    Returns:
+        str: Reminder message
+    """
+    
+    try:
+        current_plan = user_data.get('current_study_plan') or user_data.get('study_plan')
+        
+        if not current_plan:
+            return "No active study plan. Generate a study plan to get started!"
+        
+        # Get pending tasks
+        daily_tasks = current_plan.get('daily_tasks', [])
+        pending_tasks = [task for task in daily_tasks if not task.get('completed', False)]
+        
+        if not pending_tasks:
+            return "🎉 Great job! All tasks for today are completed!"
+        
+        # Count tasks by subject
+        subject_counts = {}
+        for task in pending_tasks:
+            subject = task.get('subject', 'Unknown')
+            subject_counts[subject] = subject_counts.get(subject, 0) + 1
+        
+        # Create reminder message
+        reminder = f"⏰ Study Reminder!\n\nYou have {len(pending_tasks)} tasks pending:\n"
+        
+        for subject, count in subject_counts.items():
+            reminder += f"• {subject}: {count} task(s)\n"
+        
+        reminder += f"\nKeep up the great work! 💪"
+        
+        return reminder
+        
+    except Exception as e:
+        print(f"Error creating reminder: {str(e)}")
+        return "Error creating study reminder"
+
+def backup_user_data(user_data):
+    """
+    Create a backup of user data
+    
+    Args:
+        user_data (dict): User data to backup
+        
+    Returns:
+        bool: Success status
+    """
+    
+    try:
+        # Create backup filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_filename = f"user_data_backup_{timestamp}.json"
+        
+        # Save backup
+        with open(backup_filename, 'w') as f:
+            json.dump(user_data, f, indent=2)
+        
+        return True
+        
+    except Exception as e:
+        print(f"Error creating backup: {str(e)}")
+        return False
+
+def restore_user_data(backup_filename):
+    """
+    Restore user data from backup
+    
+    Args:
+        backup_filename (str): Backup file name
+        
+    Returns:
+        dict: Restored user data or None if failed
+    """
+    
+    try:
+        if os.path.exists(backup_filename):
+            with open(backup_filename, 'r') as f:
+                return json.load(f)
+        else:
+            return None
+            
+    except Exception as e:
+        print(f"Error restoring backup: {str(e)}")
+        return None
+
+def clean_old_backups(days_old=7):
+    """
+    Clean old backup files
+    
+    Args:
+        days_old (int): Number of days to keep backups
+    """
+    
+    try:
+        current_time = datetime.now()
+        
+        for filename in os.listdir('.'):
+            if filename.startswith('user_data_backup_') and filename.endswith('.json'):
+                # Extract timestamp from filename
+                timestamp_str = filename.replace('user_data_backup_', '').replace('.json', '')
+                file_time = datetime.strptime(timestamp_str, '%Y%m%d_%H%M%S')
+                
+                # Calculate age in days
+                age_days = (current_time - file_time).days
+                
+                if age_days > days_old:
+                    os.remove(filename)
+                    print(f"Removed old backup: {filename}")
+                    
+    except Exception as e:
+        print(f"Error cleaning backups: {str(e)}")
+
+def get_study_recommendations(user_data):
+    """
+    Get personalized study recommendations
+    
+    Args:
+        user_data (dict): User data
+        
+    Returns:
+        list: List of recommendations
+    """
+    
+    recommendations = []
+    
+    try:
+        current_plan = user_data.get('current_study_plan') or user_data.get('study_plan')
+        
+        if not current_plan:
+            recommendations.append("Start by generating a personalized study plan!")
+            return recommendations
+        
+        # Analyze completion rates
+        stats = calculate_study_statistics(user_data)
+        completion_rate = stats['completion_rate']
+        
+        if completion_rate < 30:
+            recommendations.append("Consider reducing daily study goals to build consistency")
+        elif completion_rate > 90:
+            recommendations.append("Excellent progress! You might be ready for advanced topics")
+        
+        # Analyze study hours
+        daily_hours = stats['avg_daily_hours']
+        if daily_hours > 6:
+            recommendations.append("High study load detected! Remember to take regular breaks")
+        elif daily_hours < 2:
+            recommendations.append("Consider increasing daily study hours for better coverage")
+        
+        # Subject-specific recommendations
+        daily_tasks = current_plan.get('daily_tasks', [])
+        subject_progress = {}
+        
+        for task in daily_tasks:
+            subject = task.get('subject', 'Unknown')
+            if subject not in subject_progress:
+                subject_progress[subject] = {'total': 0, 'completed': 0}
+            subject_progress[subject]['total'] += 1
+            if task.get('completed', False):
+                subject_progress[subject]['completed'] += 1
+        
+        for subject, progress in subject_progress.items():
+            rate = progress['completed'] / progress['total'] if progress['total'] > 0 else 0
+            if rate < 0.3:
+                recommendations.append(f"Focus more on {subject} - it needs more attention")
+        
+        # General recommendations
+        if completion_rate > 50:
+            recommendations.append("Great progress! Keep maintaining your study routine")
+        
+    except Exception as e:
+        print(f"Error generating recommendations: {str(e)}")
+        recommendations.append("Continue with your current study plan")
+    
+    return recommendations
+
+def format_time_remaining(exam_date):
+    """
+    Format time remaining until exam
+    
+    Args:
+        exam_date (str): Exam date in YYYY-MM-DD format
+        
+    Returns:
+        str: Formatted time remaining
+    """
+    
+    try:
+        exam_datetime = datetime.strptime(exam_date, '%Y-%m-%d')
+        current_datetime = datetime.now()
+        
+        if exam_datetime <= current_datetime:
+            return "Exam date has passed"
+        
+        delta = exam_datetime - current_datetime
+        days = delta.days
+        
+        if days == 0:
+            return "Exam is today!"
+        elif days == 1:
+            return "Exam is tomorrow!"
+        elif days <= 7:
+            return f"{days} days until exam"
+        elif days <= 30:
+            weeks = days // 7
+            remaining_days = days % 7
+            if remaining_days > 0:
+                return f"{weeks} week{'' if weeks == 1 else 's'}, {remaining_days} days until exam"
+            else:
+                return f"{weeks} week{'' if weeks == 1 else 's'} until exam"
+        else:
+            months = days // 30
+            remaining_days = days % 30
+            if remaining_days > 0:
+                return f"{months} month{'' if months == 1 else 's'}, {remaining_days} days until exam"
+            else:
+                return f"{months} month{'' if months == 1 else 's'} until exam"
+                
+    except Exception as e:
+        print(f"Error formatting time remaining: {str(e)}")
+        return "Invalid date format"
+
+def create_study_summary(user_data):
+    """
+    Create a comprehensive study summary
+    
+    Args:
+        user_data (dict): User data
+        
+    Returns:
+        dict: Study summary
+    """
+    
+    summary = {
+        'overview': {},
+        'progress': {},
+        'recommendations': [],
+        'next_steps': []
+    }
+    
+    try:
+        current_plan = user_data.get('current_study_plan') or user_data.get('study_plan')
+        
+        if current_plan:
+            # Overview
+            summary['overview'] = {
+                'subjects': current_plan.get('subjects', []),
+                'daily_hours': current_plan.get('daily_hours', 0),
+                'days_until_exam': current_plan.get('days_until_exam', 0),
+                'priority_level': current_plan.get('priority_level', 'Medium'),
+                'difficulty_level': current_plan.get('difficulty_level', 'Intermediate')
+            }
+            
+            # Progress
+            stats = calculate_study_statistics(user_data)
+            summary['progress'] = stats
+            
+            # Recommendations
+            summary['recommendations'] = get_study_recommendations(user_data)
+            
+            # Next steps
+            daily_tasks = current_plan.get('daily_tasks', [])
+            pending_tasks = [task for task in daily_tasks if not task.get('completed', False)]
+            
+            if pending_tasks:
+                summary['next_steps'] = pending_tasks[:3]  # Top 3 pending tasks
+            else:
+                summary['next_steps'] = ["All tasks completed! Great job!"]
+        
+    except Exception as e:
+        print(f"Error creating summary: {str(e)}")
+    
+    return summary

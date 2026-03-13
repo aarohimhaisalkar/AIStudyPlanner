@@ -1,241 +1,765 @@
+import openai
+import os
 from datetime import datetime, timedelta
+import json
 import random
-from typing import Dict, List, Any
+from dotenv import load_dotenv
 
-class StudyPlanner:
-    """
-    Smart Study Plan Generator that creates personalized study schedules
-    based on user inputs and difficulty levels.
-    """
+# Load environment variables from .env file
+load_dotenv()
+
+# Get API key and validate it
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key or api_key == "your_openai_api_key_here":
+    print("⚠️ Warning: Invalid OpenAI API key. Please update your .env file.")
+    print("📝 Instructions:")
+    print("1. Get your API key from: https://platform.openai.com/account/api-keys")
+    print("2. Edit the .env file")
+    print("3. Replace 'your_openai_api_key_here' with your actual API key")
+    client = None
+else:
+    # Set OpenAI API key from environment variable
+    client = openai.OpenAI(api_key=api_key)
+
+def init_openai_client():
+    """Initialize OpenAI client - called from app_db.py"""
+    # This function exists for compatibility with app_db.py imports
+    pass
+
+def generate_mock_study_plan(user_input):
+    """Generate a mock study plan for testing when API is unavailable"""
+    subjects = user_input.get('subjects', ['Mathematics'])
+    daily_hours = user_input.get('daily_hours', 4)
+    days_until = user_input.get('days_until_exam', 30)
     
-    def __init__(self):
-        self.difficulty_multipliers = {
-            "Easy": 1.2,
-            "Medium": 1.0,
-            "Hard": 0.8
-        }
-        
-        self.topic_templates = {
-            "Mathematics": [
-                "Algebra Basics", "Linear Equations", "Quadratic Equations", "Geometry Fundamentals",
-                "Trigonometry", "Calculus Introduction", "Statistics Basics", "Probability Theory",
-                "Advanced Algebra", "Coordinate Geometry", "Differential Calculus", "Integral Calculus"
-            ],
-            "Physics": [
-                "Mechanics Basics", "Newton's Laws", "Work and Energy", "Momentum and Collisions",
-                "Rotational Motion", "Gravitation", "Fluid Mechanics", "Thermodynamics",
-                "Oscillations", "Waves", "Electrostatics", "Current Electricity"
-            ],
-            "Chemistry": [
-                "Atomic Structure", "Chemical Bonding", "Periodic Table", "Chemical Reactions",
-                "Acids and Bases", "Redox Reactions", "Organic Chemistry Basics", "Hydrocarbons",
-                "Solutions", "Chemical Kinetics", "Thermodynamics", "Equilibrium"
-            ],
-            "Biology": [
-                "Cell Biology", "Genetics Basics", "Evolution Theory", "Ecology",
-                "Human Anatomy", "Physiology", "Plant Biology", "Microbiology",
-                "Biochemistry", "Molecular Biology", "Biotechnology", "Environmental Science"
-            ],
-            "Computer Science": [
-                "Programming Basics", "Data Structures", "Algorithms", "Database Management",
-                "Web Development", "Machine Learning Basics", "Artificial Intelligence", "Cybersecurity",
-                "Software Engineering", "Computer Networks", "Operating Systems", "Cloud Computing"
-            ],
-            "History": [
-                "Ancient Civilizations", "Medieval Period", "Renaissance", "Industrial Revolution",
-                "World Wars", "Cold War", "Modern History", "Cultural History",
-                "Economic History", "Political History", "Social History", "Military History"
-            ],
-            "Literature": [
-                "Poetry Analysis", "Novel Studies", "Drama and Theatre", "Literary Theory",
-                "Creative Writing", "Critical Analysis", "World Literature", "Modern Literature",
-                "Classical Literature", "Contemporary Writing", "Literary Movements", "Author Studies"
-            ]
-        }
+    # Daily activities
+    sleep_hours = user_input.get('sleep_hours', 8)
+    meal_time = user_input.get('meal_time', 2)
+    play_time = user_input.get('play_time', 1)
+    exercise_time = user_input.get('exercise_time', 0.5)
+    personal_time = user_input.get('personal_time', 1)
     
-    def generate_topic_names(self, subject: str, total_topics: int) -> List[str]:
-        """
-        Generate topic names based on the subject.
-        If subject is not in templates, create generic topic names.
-        """
-        subject_key = subject.title()
-        
-        # Check if we have templates for this subject
-        if subject_key in self.topic_templates:
-            available_topics = self.topic_templates[subject_key].copy()
-            
-            # If we need more topics than available, create variations
-            if total_topics > len(available_topics):
-                extra_topics = []
-                for i in range(total_topics - len(available_topics)):
-                    extra_topics.append(f"Advanced Topic {i+1}")
-                return available_topics + extra_topics
-            else:
-                # Randomly select topics from available ones
-                return random.sample(available_topics, total_topics)
-        else:
-            # Generate generic topic names
-            return [f"Topic {i+1}: {subject}" for i in range(total_topics)]
+    result = {
+        'daily_schedule': [
+            {
+                'time': '06:00 - 06:30',
+                'activity': 'Wake up & Morning Routine',
+                'category': 'Personal',
+                'description': 'Start the day fresh'
+            },
+            {
+                'time': '06:30 - 07:00',
+                'activity': 'Exercise',
+                'category': 'Health',
+                'description': 'Physical activity for energy'
+            },
+            {
+                'time': '07:00 - 08:00',
+                'activity': 'Breakfast',
+                'category': 'Meal',
+                'description': 'Healthy breakfast to fuel the brain'
+            },
+            {
+                'time': '09:00 - 10:30',
+                'subject': subjects[0] if subjects else 'Mathematics',
+                'topic': 'Study Session 1',
+                'activity': 'Study new concepts',
+                'category': 'Study'
+            },
+            {
+                'time': '12:30 - 13:30',
+                'activity': 'Lunch',
+                'category': 'Meal',
+                'description': 'Midday meal break'
+            },
+            {
+                'time': '14:00 - 16:00',
+                'subject': subjects[1] if len(subjects) > 1 else subjects[0],
+                'topic': 'Study Session 2',
+                'activity': 'Practice problems',
+                'category': 'Study'
+            },
+            {
+                'time': '16:00 - 17:00',
+                'activity': 'Leisure Time',
+                'category': 'Leisure',
+                'description': 'Relax and recharge'
+            },
+            {
+                'time': '19:00 - 20:00',
+                'activity': 'Dinner',
+                'category': 'Meal',
+                'description': 'Evening meal'
+            },
+            {
+                'time': '20:00 - 21:00',
+                'activity': 'Personal Time',
+                'category': 'Personal',
+                'description': 'Hobbies and relaxation'
+            },
+            {
+                'time': '22:00 - 06:00',
+                'activity': 'Sleep',
+                'category': 'Personal',
+                'description': f'Rest for {sleep_hours} hours'
+            }
+        ],
+        'daily_tasks': [],
+        'study_tips': [
+            "Use the Pomodoro technique for better focus",
+            "Schedule study sessions during your peak energy hours",
+            "Take regular breaks to maintain concentration",
+            f"Get {sleep_hours} hours of sleep for optimal learning"
+        ],
+        'break_schedule': [
+            {
+                'time': '10:30 - 10:45',
+                'activity': 'Short break and stretch'
+            },
+            {
+                'time': '15:30 - 15:45',
+                'activity': 'Quick walk and refresh'
+            }
+        ],
+        'subjects': subjects,
+        'daily_hours': daily_hours,
+        'days_until_exam': days_until,
+        'sleep_hours': sleep_hours,
+        'meal_time': meal_time,
+        'play_time': play_time,
+        'exercise_time': exercise_time,
+        'personal_time': personal_time
+    }
     
-    def calculate_daily_topics(self, total_topics: int, total_days: int, difficulty: str) -> List[int]:
-        """
-        Calculate how many topics to study each day based on difficulty.
-        Returns a list of topic counts per day.
-        """
-        multiplier = self.difficulty_multipliers.get(difficulty, 1.0)
-        
-        # Adjust total effective topics based on difficulty
-        effective_topics = int(total_topics * multiplier)
-        
-        # Base distribution
-        base_topics_per_day = effective_topics // total_days
-        remainder = effective_topics % total_days
-        
-        # Create distribution
-        daily_topics = [base_topics_per_day] * total_days
-        
-        # Distribute remainder topics
-        for i in range(remainder):
-            daily_topics[i] += 1
-        
-        # Ensure no day has 0 topics
-        for i in range(total_days):
-            if daily_topics[i] == 0 and total_topics > 0:
-                daily_topics[i] = 1
-                # Remove from another day
-                for j in range(total_days):
-                    if daily_topics[j] > 1:
-                        daily_topics[j] -= 1
-                        break
-        
-        return daily_topics
+    # Generate tasks for each subject
+    hours_per_subject = daily_hours / max(len(subjects), 1)
+    current_time = 9.0
     
-    def generate_plan(self, subject: str, total_topics: int, exam_date: datetime.date, 
-                     hours_per_day: int, difficulty: str) -> Dict[str, Any]:
-        """
-        Generate a comprehensive study plan.
-        """
-        # Calculate days until exam
-        today = datetime.now().date()
-        days_until_exam = (exam_date - today).days
-        
-        if days_until_exam <= 0:
-            raise ValueError("Exam date must be in the future")
-        
-        # Generate topic names
-        topic_names = self.generate_topic_names(subject, total_topics)
-        
-        # Calculate daily topic distribution
-        daily_topic_counts = self.calculate_daily_topics(total_topics, days_until_exam, difficulty)
-        
-        # Create daily plan
-        daily_plan = []
-        topic_index = 0
-        
-        for day in range(1, days_until_exam + 1):
-            current_date = today + timedelta(days=day - 1)
-            topics_for_day = daily_topic_counts[day - 1]
-            
-            # Assign topics for this day
-            day_topics = []
-            for i in range(topics_for_day):
-                if topic_index < len(topic_names):
-                    day_topics.append(topic_names[topic_index])
-                    topic_index += 1
-                else:
-                    break
-            
-            # Only add days with topics
-            if day_topics:
-                daily_plan.append({
-                    'day': day,
-                    'date': current_date.strftime('%Y-%m-%d'),
-                    'topics': day_topics,
-                    'topics_count': len(day_topics),
-                    'estimated_hours': min(hours_per_day, len(day_topics) * 2),
-                    'difficulty': difficulty
-                })
-        
-        # Calculate study statistics
-        total_study_hours = sum(day['estimated_hours'] for day in daily_plan)
-        avg_topics_per_day = total_topics / len(daily_plan) if daily_plan else 0
-        
-        # Generate study tips based on difficulty
-        study_tips = self.generate_study_tips(difficulty, hours_per_day)
-        
-        # Create the complete plan
-        study_plan = {
+    for i, subject in enumerate(subjects):
+        task = {
             'subject': subject,
-            'total_topics': total_topics,
-            'exam_date': exam_date.strftime('%Y-%m-%d'),
-            'days_until_exam': days_until_exam,
-            'hours_per_day': hours_per_day,
-            'difficulty': difficulty,
-            'daily_plan': daily_plan,
-            'total_study_hours': total_study_hours,
-            'avg_topics_per_day': round(avg_topics_per_day, 1),
-            'study_tips': study_tips,
-            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            'description': f'Complete {subject} exercises and review concepts',
+            'duration': round(hours_per_subject, 1),
+            'priority': 'High' if i == 0 else 'Medium',
+            'completed': False,
+            'category': 'Study',
+            'time': f"{int(current_time):02d}:00 - {int(current_time + hours_per_subject):02d}:00"
+        }
+        result['daily_tasks'].append(task)
+        current_time += hours_per_subject
+    
+    return result
+
+def generate_study_plan(user_input):
+    """
+    Generate a personalized study plan using OpenAI API
+    
+    Args:
+        user_input (dict): Dictionary containing user preferences and constraints
+        
+    Returns:
+        dict: Generated study plan with daily tasks and recommendations
+    """
+    
+    # If no API client available, use mock mode
+    if not client:
+        print("🧪 Using mock mode - API client not available")
+        return generate_mock_study_plan(user_input)
+    
+    # Validate OpenAI API key
+    if not client:
+        raise ValueError("OpenAI API key not configured. Please update your .env file with a valid API key.")
+    
+    # Construct the prompt for AI
+    prompt = create_study_plan_prompt(user_input)
+    
+    try:
+        # Call OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert study planner and educational consultant. Create comprehensive, realistic study plans that balance academic goals with student wellbeing."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            max_tokens=2000,
+            temperature=0.7
+        )
+        
+        # Parse the response
+        plan_text = response.choices[0].message.content
+        
+        # Try to parse as JSON
+        try:
+            study_plan = json.loads(plan_text)
+            return study_plan
+        except json.JSONDecodeError:
+            # If JSON parsing fails, create a basic plan
+            print("⚠️ JSON parsing failed, creating basic plan")
+            return generate_mock_study_plan(user_input)
+            
+    except Exception as e:
+        # Handle API errors gracefully
+        error_message = str(e)
+        if "429" in error_message or "quota" in error_message.lower():
+            print("🚫 API quota exceeded, using mock mode")
+            return generate_mock_study_plan(user_input)
+        elif "401" in error_message or "invalid_api_key" in error_message.lower():
+            print("❌ Invalid API key, using mock mode")
+            return generate_mock_study_plan(user_input)
+        else:
+            print(f"⚠️ API error: {e}, using mock mode")
+            return generate_mock_study_plan(user_input)
+
+def create_study_plan_prompt(user_input):
+    """
+    Create a detailed prompt for the AI based on user input
+    
+    Args:
+        user_input (dict): User preferences and constraints
+        
+    Returns:
+        str: Formatted prompt for OpenAI API
+    """
+    
+    subjects = user_input.get('subjects', [])
+    daily_hours = user_input.get('daily_hours', 4)
+    exam_date = user_input.get('exam_date', '')
+    days_until = user_input.get('days_until_exam', 30)
+    priority = user_input.get('priority_level', 'Medium')
+    difficulty = user_input.get('difficulty_level', 'Intermediate')
+    preference = user_input.get('study_preference', 'Flexible')
+    include_breaks = user_input.get('include_breaks', True)
+    include_revision = user_input.get('include_revision', True)
+    include_tests = user_input.get('include_tests', False)
+    flexible = user_input.get('flexible_schedule', True)
+    
+    # Daily Activities
+    sleep_hours = user_input.get('sleep_hours', 8)
+    meal_time = user_input.get('meal_time', 2)
+    play_time = user_input.get('play_time', 1)
+    exercise_time = user_input.get('exercise_time', 0.5)
+    personal_time = user_input.get('personal_time', 1)
+    screen_time_limit = user_input.get('screen_time_limit', 2)
+    
+    # Calculate total daily hours
+    total_activity_hours = sleep_hours + meal_time + play_time + exercise_time + personal_time + daily_hours
+    remaining_hours = 24 - total_activity_hours
+    
+    prompt = f"""
+Create a comprehensive DAILY LIFESTYLE AND STUDY PLAN for a student with the following details:
+
+ACADEMIC DETAILS:
+SUBJECTS: {', '.join(subjects)}
+DAILY STUDY HOURS: {daily_hours} hours
+EXAM DATE: {exam_date}
+DAYS UNTIL EXAM: {days_until} days
+PRIORITY LEVEL: {priority}
+DIFFICULTY LEVEL: {difficulty}
+STUDY PREFERENCE: {preference}
+
+DAILY ACTIVITIES:
+SLEEP HOURS: {sleep_hours} hours
+MEAL TIME: {meal_time} hours
+PLAY/LEISURE TIME: {play_time} hours
+EXERCISE TIME: {exercise_time} hours
+PERSONAL TIME: {personal_time} hours
+SCREEN TIME LIMIT: {screen_time_limit} hours
+TOTAL SCHEDULED HOURS: {total_activity_hours} hours
+FREE TIME: {remaining_hours:.1f} hours
+
+STUDY OPTIONS:
+INCLUDE BREAKS: {include_breaks}
+INCLUDE REVISION SESSIONS: {include_revision}
+INCLUDE PRACTICE TESTS: {include_tests}
+FLEXIBLE SCHEDULING: {flexible}
+
+Please provide a COMPLETE DAILY SCHEDULE that includes:
+1. HOURLY TIMELINE from morning to night
+2. STUDY SESSIONS with subjects and topics
+3. MEAL TIMES (breakfast, lunch, dinner)
+4. SLEEP SCHEDULE
+5. EXERCISE/PHYSICAL ACTIVITY
+6. LEISURE/PLAY TIME
+7. PERSONAL TIME for hobbies/relaxation
+8. SCREEN TIME management
+9. Study tips and strategies
+10. Break recommendations
+6. Practice test schedule (if requested)
+
+Format your response as JSON with the following structure:
+{{
+    "daily_schedule": [
+        {{
+            "time": "06:00 - 06:30",
+            "activity": "Wake up & Morning Routine",
+            "category": "Personal",
+            "description": "Start the day fresh"
+        }},
+        {{
+            "time": "06:30 - 07:00",
+            "activity": "Exercise",
+            "category": "Health",
+            "description": "Physical activity for energy"
+        }},
+        {{
+            "time": "07:00 - 08:00",
+            "activity": "Breakfast",
+            "category": "Meal",
+            "description": "Healthy breakfast to fuel the brain"
+        }},
+        {{
+            "time": "09:00 - 10:30",
+            "subject": "Mathematics",
+            "topic": "Calculus - Derivatives",
+            "activity": "Study new concepts",
+            "category": "Study"
+        }}
+    ],
+    "daily_tasks": [
+        {{
+            "subject": "Mathematics",
+            "description": "Complete calculus exercises",
+            "duration": 1.5,
+            "priority": "High",
+            "completed": false,
+            "category": "Study"
+        }}
+    ],
+    "daily_activities": {{
+        "sleep_schedule": {{
+            "bedtime": "22:00",
+            "wake_time": "06:00",
+            "total_hours": {sleep_hours}
+        }},
+        "meal_times": [
+            {{
+                "meal": "Breakfast",
+                "time": "07:00 - 08:00",
+                "duration": 1
+            }},
+            {{
+                "meal": "Lunch", 
+                "time": "12:30 - 13:30",
+                "duration": 1
+            }},
+            {{
+                "meal": "Dinner",
+                "time": "19:00 - 20:00", 
+                "duration": 1
+            }}
+        ],
+        "exercise": {{
+            "time": "06:30 - 07:00",
+            "duration": {exercise_time},
+            "type": "Morning workout"
+        }},
+        "leisure_time": {{
+            "time": "16:00 - 17:00",
+            "duration": {play_time},
+            "activities": ["Games", "Hobbies", "Relaxation"]
+        }},
+        "personal_time": {{
+            "time": "20:00 - 21:00",
+            "duration": {personal_time},
+            "activities": ["Reading", "Meditation", "Hobbies"]
+        }}
+    }},
+    "study_tips": [
+        "Use the Pomodoro technique for better focus",
+        "Schedule study sessions during your peak energy hours",
+        "Take regular breaks to maintain concentration"
+    ],
+    "break_schedule": [
+        {{
+            "time": "10:30 - 10:45",
+            "activity": "Short break and stretch"
+        }}
+    ],
+    "revision_topics": [
+        {{
+            "subject": "Mathematics",
+            "topics": ["Algebra", "Geometry"],
+            "schedule": "Every Sunday"
+        }}
+    ],
+    "practice_tests": [
+        {{
+            "subject": "Mathematics",
+            "date": "2024-01-15",
+            "topics": ["Calculus", "Algebra"]
+        }}
+    ]
+}}
+
+Make the plan realistic, achievable, and motivational. Consider the student's preferences and constraints.
+"""
+    
+    return prompt
+
+def parse_ai_response(ai_response, user_input):
+    """
+    Parse the AI response into a structured study plan
+    
+    Args:
+        ai_response (str): Raw response from OpenAI API
+        user_input (dict): Original user input
+        
+    Returns:
+        dict: Parsed study plan
+    """
+    
+    try:
+        # Try to parse as JSON first
+        if ai_response.strip().startswith('{'):
+            study_plan = json.loads(ai_response)
+        else:
+            # Extract JSON from the response if it's embedded
+            start_idx = ai_response.find('{')
+            end_idx = ai_response.rfind('}') + 1
+            if start_idx != -1 and end_idx != -1:
+                json_str = ai_response[start_idx:end_idx]
+                study_plan = json.loads(json_str)
+            else:
+                # Fallback: create basic structure from text
+                study_plan = create_plan_from_text(ai_response, user_input)
+    
+    except json.JSONDecodeError:
+        # If JSON parsing fails, create a basic plan
+        study_plan = create_fallback_study_plan(user_input)
+    
+    # Ensure all required fields exist
+    study_plan = ensure_plan_structure(study_plan, user_input)
+    
+    return study_plan
+
+def create_fallback_study_plan(user_input):
+    """
+    Create a basic study plan when AI generation fails
+    
+    Args:
+        user_input (dict): User preferences and constraints
+        
+    Returns:
+        dict: Basic study plan
+    """
+    
+    subjects = user_input.get('subjects', [])
+    daily_hours = user_input.get('daily_hours', 4)
+    days_until = user_input.get('days_until_exam', 30)
+    
+    # Calculate hours per subject
+    hours_per_subject = daily_hours / max(len(subjects), 1)
+    
+    # Generate basic daily tasks
+    daily_tasks = []
+    current_time = 9.0  # Start at 9 AM
+    
+    for subject in subjects:
+        task = {
+            "subject": subject,
+            "description": f"Study {subject} concepts and practice problems",
+            "duration": round(hours_per_subject, 1),
+            "priority": user_input.get('priority_level', 'Medium'),
+            "completed": False,
+            "time": f"{int(current_time):02d}:00 - {int(current_time + hours_per_subject):02d}:00"
+        }
+        daily_tasks.append(task)
+        current_time += hours_per_subject
+    
+    # Basic study tips
+    study_tips = [
+        "Take regular breaks every 45-60 minutes",
+        "Review your notes at the end of each study session",
+        "Practice active recall instead of passive reading",
+        "Stay hydrated and maintain good posture",
+        "Use flashcards for key concepts"
+    ]
+    
+    study_plan = {
+        "daily_tasks": daily_tasks,
+        "study_tips": study_tips,
+        "subjects": subjects,
+        "daily_hours": daily_hours,
+        "days_until_exam": days_until,
+        "priority_level": user_input.get('priority_level', 'Medium'),
+        "difficulty_level": user_input.get('difficulty_level', 'Intermediate')
+    }
+    
+    return study_plan
+
+def create_plan_from_text(ai_response, user_input):
+    """
+    Create a study plan from text response when JSON parsing fails
+    
+    Args:
+        ai_response (str): Text response from AI
+        user_input (dict): User input data
+        
+    Returns:
+        dict: Structured study plan
+    """
+    
+    subjects = user_input.get('subjects', [])
+    daily_hours = user_input.get('daily_hours', 4)
+    
+    # Extract tasks from text (basic implementation)
+    daily_tasks = []
+    for subject in subjects:
+        task = {
+            "subject": subject,
+            "description": f"Study {subject} as per AI recommendations",
+            "duration": daily_hours / len(subjects),
+            "priority": user_input.get('priority_level', 'Medium'),
+            "completed": False
+        }
+        daily_tasks.append(task)
+    
+    # Extract tips from text
+    study_tips = [
+        "Follow the AI-generated recommendations",
+        "Maintain consistent study schedule",
+        "Review regularly for better retention"
+    ]
+    
+    return {
+        "daily_tasks": daily_tasks,
+        "study_tips": study_tips,
+        "subjects": subjects,
+        "daily_hours": daily_hours
+    }
+
+def ensure_plan_structure(study_plan, user_input):
+    """
+    Ensure the study plan has all required fields
+    
+    Args:
+        study_plan (dict): Current study plan
+        user_input (dict): User input data
+        
+    Returns:
+        dict: Complete study plan
+    """
+    
+    # Required fields with defaults
+    required_fields = {
+        "daily_tasks": [],
+        "study_tips": [],
+        "subjects": user_input.get('subjects', []),
+        "daily_hours": user_input.get('daily_hours', 4),
+        "days_until_exam": user_input.get('days_until_exam', 30),
+        "priority_level": user_input.get('priority_level', 'Medium'),
+        "difficulty_level": user_input.get('difficulty_level', 'Intermediate'),
+        "break_schedule": [],
+        "revision_topics": [],
+        "practice_tests": []
+    }
+    
+    # Add missing fields
+    for field, default_value in required_fields.items():
+        if field not in study_plan:
+            study_plan[field] = default_value
+    
+    # Ensure tasks have required fields
+    for task in study_plan.get('daily_tasks', []):
+        if 'completed' not in task:
+            task['completed'] = False
+        if 'priority' not in task:
+            task['priority'] = user_input.get('priority_level', 'Medium')
+        if 'duration' not in task:
+            task['duration'] = 1.0
+    
+    return study_plan
+
+def enhance_study_plan(study_plan, user_input):
+    """
+    Add additional features to the study plan
+    
+    Args:
+        study_plan (dict): Current study plan
+        user_input (dict): User input data
+        
+    Returns:
+        dict: Enhanced study plan
+    """
+    
+    # Add motivational quotes
+    motivational_quotes = [
+        "Success is the sum of small efforts repeated day in and day out.",
+        "The expert in anything was once a beginner.",
+        "Your future is created by what you do today, not tomorrow.",
+        "Education is the passport to the future.",
+        "Believe you can and you're halfway there."
+    ]
+    
+    if 'motivational_quotes' not in study_plan:
+        study_plan['motivational_quotes'] = random.sample(motivational_quotes, 3)
+    
+    # Add productivity tips
+    productivity_tips = [
+        "Use the Pomodoro Technique: 25 minutes of focused study followed by a 5-minute break.",
+        "Create a dedicated study space free from distractions.",
+        "Set specific, measurable goals for each study session.",
+        "Review material within 24 hours for better retention.",
+        "Teach concepts to others to reinforce your understanding."
+    ]
+    
+    if 'productivity_tips' not in study_plan:
+        study_plan['productivity_tips'] = productivity_tips
+    
+    # Add weekly schedule if not present
+    if 'weekly_schedule' not in study_plan:
+        study_plan['weekly_schedule'] = generate_weekly_schedule(study_plan, user_input)
+    
+    # Add milestones
+    if 'milestones' not in study_plan:
+        study_plan['milestones'] = generate_milestones(study_plan, user_input)
+    
+    return study_plan
+
+def generate_weekly_schedule(study_plan, user_input):
+    """
+    Generate a weekly study schedule
+    
+    Args:
+        study_plan (dict): Current study plan
+        user_input (dict): User input data
+        
+    Returns:
+        list: Weekly schedule
+    """
+    
+    subjects = study_plan.get('subjects', [])
+    daily_hours = study_plan.get('daily_hours', 4)
+    
+    weekly_schedule = []
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    
+    for day in days:
+        day_schedule = {
+            'day': day,
+            'tasks': [],
+            'total_hours': daily_hours
         }
         
-        return study_plan
+        # Distribute subjects throughout the week
+        for i, subject in enumerate(subjects):
+            if i < len(subjects):
+                task = {
+                    'subject': subject,
+                    'duration': daily_hours / len(subjects),
+                    'time': f"{9 + i * 2}:00 - {9 + i * 2 + 2}:00"
+                }
+                day_schedule['tasks'].append(task)
+        
+        weekly_schedule.append(day_schedule)
     
-    def generate_study_tips(self, difficulty: str, hours_per_day: int) -> List[str]:
-        """
-        Generate personalized study tips based on difficulty and available time.
-        """
-        tips = []
-        
-        # Difficulty-specific tips
-        if difficulty == "Easy":
-            tips.extend([
-                "Focus on understanding concepts rather than memorization",
-                "Use visual aids and diagrams to enhance learning",
-                "Practice with real-world examples"
-            ])
-        elif difficulty == "Medium":
-            tips.extend([
-                "Break complex topics into smaller, manageable parts",
-                "Use the Pomodoro Technique: 25 min study, 5 min break",
-                "Review previous topics regularly to reinforce learning"
-            ])
-        else:  # Hard
-            tips.extend([
-                "Start with fundamentals before moving to advanced topics",
-                "Use active recall techniques instead of passive reading",
-                "Take regular breaks to avoid burnout (every 45-60 minutes)"
-            ])
-        
-        # Time-specific tips
-        if hours_per_day <= 2:
-            tips.append("Prioritize the most important topics first")
-        elif hours_per_day <= 4:
-            tips.append("Balance between new topics and revision")
-        else:
-            tips.append("Include practice problems and hands-on activities")
-        
-        # General tips
-        tips.extend([
-            "Stay consistent with your study schedule",
-            "Get adequate sleep for better retention",
-            "Stay hydrated and maintain a healthy diet"
-        ])
-        
-        return tips[:6]  # Return top 6 tips
+    return weekly_schedule
+
+def generate_milestones(study_plan, user_input):
+    """
+    Generate study milestones
     
-    def adjust_plan_for_progress(self, original_plan: Dict[str, Any], 
-                                completed_topics: List[str]) -> Dict[str, Any]:
-        """
-        Adjust the study plan based on completed topics.
-        """
-        # This is a placeholder for future enhancement
-        # Could be used to dynamically adjust remaining study days
-        return original_plan
+    Args:
+        study_plan (dict): Current study plan
+        user_input (dict): User input data
+        
+    Returns:
+        list: Study milestones
+    """
     
-    def calculate_completion_rate(self, total_topics: int, completed_topics: List[str]) -> float:
-        """
-        Calculate the completion rate as a percentage.
-        """
-        if total_topics == 0:
-            return 0.0
-        return (len(completed_topics) / total_topics) * 100
+    days_until = user_input.get('days_until_exam', 30)
+    subjects = study_plan.get('subjects', [])
+    
+    milestones = []
+    
+    # Create milestones at 25%, 50%, 75%, and 100% completion
+    milestone_points = [0.25, 0.5, 0.75, 1.0]
+    
+    for point in milestone_points:
+        days_to_milestone = int(days_until * point)
+        milestone = {
+            'name': f"{int(point * 100)}% Study Complete",
+            'target_date': f"Day {days_to_milestone}",
+            'description': f"Complete {int(point * 100)}% of study material",
+            'subjects_covered': subjects[:int(len(subjects) * point)]
+        }
+        milestones.append(milestone)
+    
+    return milestones
+
+def validate_study_plan(study_plan):
+    """
+    Validate the generated study plan
+    
+    Args:
+        study_plan (dict): Study plan to validate
+        
+    Returns:
+        tuple: (is_valid, error_message)
+    """
+    
+    required_fields = ['daily_tasks', 'subjects', 'daily_hours']
+    
+    for field in required_fields:
+        if field not in study_plan:
+            return False, f"Missing required field: {field}"
+    
+    if not study_plan['daily_tasks']:
+        return False, "No daily tasks generated"
+    
+    if not study_plan['subjects']:
+        return False, "No subjects specified"
+    
+    if study_plan['daily_hours'] <= 0:
+        return False, "Daily hours must be greater than 0"
+    
+    return True, "Study plan is valid"
+
+def get_study_recommendations(study_plan, user_progress):
+    """
+    Get personalized study recommendations based on progress
+    
+    Args:
+        study_plan (dict): Current study plan
+        user_progress (dict): User's progress data
+        
+    Returns:
+        list: Personalized recommendations
+    """
+    
+    recommendations = []
+    
+    # Analyze completion rates
+    completed_tasks = sum(1 for task in study_plan.get('daily_tasks', []) if task.get('completed', False))
+    total_tasks = len(study_plan.get('daily_tasks', []))
+    completion_rate = completed_tasks / total_tasks if total_tasks > 0 else 0
+    
+    if completion_rate < 0.5:
+        recommendations.append("Consider reducing daily study hours to maintain consistency")
+    elif completion_rate > 0.9:
+        recommendations.append("Great progress! You might be ready for advanced topics")
+    
+    # Subject-specific recommendations
+    subject_progress = {}
+    for task in study_plan.get('daily_tasks', []):
+        subject = task.get('subject', 'Unknown')
+        if subject not in subject_progress:
+            subject_progress[subject] = {'total': 0, 'completed': 0}
+        subject_progress[subject]['total'] += 1
+        if task.get('completed', False):
+            subject_progress[subject]['completed'] += 1
+    
+    for subject, progress in subject_progress.items():
+        rate = progress['completed'] / progress['total'] if progress['total'] > 0 else 0
+        if rate < 0.3:
+            recommendations.append(f"Focus more on {subject} - it needs more attention")
+        elif rate > 0.8:
+            recommendations.append(f"Excellent progress in {subject}! Consider advanced topics")
+    
+    return recommendations

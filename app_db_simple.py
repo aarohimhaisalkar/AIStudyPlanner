@@ -1,143 +1,185 @@
+"""
+Simple Enhanced AI Study Planner - No Database Dependencies
+"""
+
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
 import plotly.express as px
-import plotly.graph_objects as go
+from datetime import datetime, timedelta
+import json
+import os
+
+# Import our modules
 from planner import generate_study_plan
-from analytics import create_analytics_charts
-from utils import (
-    load_user_data, save_user_data, get_motivational_quote,
-    export_study_plan_csv, calculate_study_progress
-)
+from utils import save_user_data, load_user_data
+from analytics import create_analytics_charts, export_study_plan_csv
 
 # Page configuration
 st.set_page_config(
-    page_title="AI Study Planner",
+    page_title="AI Study Planner - Enhanced",
     page_icon="📚",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Initialize session state
-if 'study_plan' not in st.session_state:
-    st.session_state.study_plan = None
-if 'user_data' not in st.session_state:
-    st.session_state.user_data = load_user_data()
-if 'current_page' not in st.session_state:
-    st.session_state.current_page = "Home"
-if 'task_completion' not in st.session_state:
-    st.session_state.task_completion = {}
-
 # Custom CSS
-try:
-    with open('styles.css', 'r') as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-except FileNotFoundError:
-    st.warning("CSS file not found. Some styling may be missing.")
+def load_css():
+    st.markdown("""
+    <style>
+    .main {
+        padding-top: 2rem;
+    }
+    .stButton > button {
+        background-color: #4CAF50;
+        color: white;
+        font-weight: bold;
+        border-radius: 10px;
+        border: none;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background-color: #45a049;
+        transform: translateY(-2px);
+    }
+    .task-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .feature-card {
+        background: #f7fafc;
+        border-left: 4px solid #4299e1;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-radius: 8px;
+    }
+    .tip-card {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        color: #1a202c;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .completed-task {
+        background: #c6f6d5;
+        color: #1a202c;
+        padding: 0.5rem;
+        border-radius: 5px;
+        margin: 0.25rem 0;
+        text-decoration: line-through;
+    }
+    .footer {
+        text-align: center;
+        padding: 2rem;
+        color: #718096;
+        border-top: 1px solid #e2e8f0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-def handle_navigation(page_name):
-    """Handle navigation button clicks"""
-    st.session_state.current_page = page_name
+# Initialize session state
+def init_session_state():
+    """Initialize session state variables"""
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "Home"
+    
+    if 'user_data' not in st.session_state:
+        st.session_state.user_data = load_user_data()
+    
+    if 'study_plan' not in st.session_state:
+        st.session_state.study_plan = None
+    
+    if 'task_completion' not in st.session_state:
+        st.session_state.task_completion = {}
+
+# Navigation handlers
+def handle_navigation(page):
+    """Handle page navigation"""
+    st.session_state.current_page = page
     st.rerun()
 
-def handle_task_completion(task_index, completed):
-    """Handle task checkbox changes"""
-    if st.session_state.study_plan and 'daily_tasks' in st.session_state.study_plan:
-        st.session_state.study_plan['daily_tasks'][task_index]['completed'] = completed
-        task_key = f"task_{task_index}"
-        st.session_state.task_completion[task_key] = completed
+def handle_task_completion(task_id, completed):
+    """Handle task completion updates"""
+    st.session_state.task_completion[task_id] = completed
 
+# Sidebar navigation
 def sidebar_navigation():
-    """Create sidebar navigation"""
-    with st.sidebar:
-        st.title("📚 AI Study Planner")
-        st.markdown("---")
-        
-        # Navigation
-        pages = ["Home", "Generate Study Plan", "Dashboard", "Progress Tracker", "Analytics"]
-        page = st.selectbox("Navigate to:", pages)
-        st.session_state.current_page = page
-        
-        st.markdown("---")
-        
-        # Motivational quote
-        st.markdown("### 💡 Daily Motivation")
-        quote = get_motivational_quote()
-        st.info(quote)
-        
-        st.markdown("---")
-        
-        # User stats
-        if st.session_state.user_data:
-            st.markdown("### 📊 Your Stats")
-            progress = calculate_study_progress(st.session_state.user_data)
-            st.metric("Overall Progress", f"{progress}%")
-            
-            if 'study_plan' in st.session_state.user_data and st.session_state.user_data['study_plan']:
-                total_tasks = len(st.session_state.user_data['study_plan'].get('daily_tasks', []))
-                completed_tasks = sum(1 for task in st.session_state.user_data['study_plan'].get('daily_tasks', []) 
-                                   if task.get('completed', False))
-                st.metric("Completed Tasks", f"{completed_tasks}/{total_tasks}")
-
-def home_page():
-    """Home page with overview"""
-    st.title("🎯 Welcome to AI Study Planner")
-    st.markdown("Your intelligent companion for personalized study planning!")
+    """Enhanced sidebar navigation"""
     
-    # Feature cards
+    # Navigation
+    st.sidebar.markdown("---")
+    st.sidebar.title("🧭 Navigation")
+    
+    pages = [
+        ("🏠 Home", "Home"),
+        ("📝 Generate Study Plan", "Generate Study Plan"),
+        ("📊 Dashboard", "Dashboard"),
+        ("📈 Progress Tracker", "Progress Tracker"),
+        ("📊 Analytics", "Analytics")
+    ]
+    
+    for page_name, page_key in pages:
+        if st.sidebar.button(page_name, key=f"nav_{page_key}", width='stretch'):
+            handle_navigation(page_key)
+
+# Home page
+def home_page():
+    """Enhanced home page"""
+    st.title("🎓 AI Study Planner - Enhanced")
+    st.markdown("### 🌟 Your Intelligent Study Companion with Daily Activities Integration")
+    
+    # Feature highlights
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("""
         <div class="feature-card">
-            <h3>🤖 AI-Powered Planning</h3>
-            <p>Get personalized study schedules generated by advanced AI algorithms.</p>
+            <h4>🧠 AI-Powered Planning</h4>
+            <p>Get personalized study plans powered by advanced AI technology that considers your learning style and daily schedule.</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
         <div class="feature-card">
-            <h3>📈 Progress Tracking</h3>
-            <p>Monitor your study progress and stay motivated with visual analytics.</p>
+            <h4>🌅 Daily Activities Integration</h4>
+            <p>Complete lifestyle planning with sleep, meals, exercise, play time, and personal activities.</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col3:
         st.markdown("""
         <div class="feature-card">
-            <h3>⚡ Smart Recommendations</h3>
-            <p>Receive intelligent study tips and optimization suggestions.</p>
+            <h4>📊 Progress Analytics</h4>
+            <p>Track your study progress with detailed analytics and visualizations.</p>
         </div>
         """, unsafe_allow_html=True)
     
-    st.markdown("---")
-    
     # Quick start section
+    st.markdown("---")
     st.subheader("🚀 Quick Start")
     
-    if not st.session_state.study_plan:
-        st.info("No study plan generated yet. Go to 'Generate Study Plan' to create your personalized schedule!")
-        if st.button("🚀 Create Your First Study Plan", key="quick_start", width='stretch'):
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("📝 Create New Study Plan", key="quick_start", width='stretch'):
             handle_navigation("Generate Study Plan")
-    else:
-        st.success("You have an active study plan! Check your Dashboard for details.")
-        
-        # Show quick stats
-        plan = st.session_state.study_plan
-        col1, col2, col3, col4 = st.columns(4)
-        
-        with col1:
-            st.metric("Study Hours/Day", plan.get('daily_hours', 0))
-        with col2:
-            st.metric("Subjects", len(plan.get('subjects', [])))
-        with col3:
-            st.metric("Days Until Exam", plan.get('days_until_exam', 0))
-        with col4:
-            st.metric("Total Tasks", len(plan.get('daily_tasks', [])))
+    
+    with col2:
+        if st.session_state.study_plan:
+            if st.button("📊 View Dashboard", key="view_dashboard", width='stretch'):
+                handle_navigation("Dashboard")
+        else:
+            st.info("📋 No study plan yet. Create one to get started!")
 
+# Generate study plan page (enhanced with daily activities)
 def generate_study_plan_page():
-    """Page for generating new study plans"""
+    """Enhanced study plan generation with daily activities"""
     st.title("📝 Generate Your Study Plan")
     st.markdown("Fill in your details to create a personalized study schedule.")
     
@@ -168,9 +210,10 @@ def generate_study_plan_page():
             st.subheader("⏰ Study Schedule")
             daily_hours = st.slider(
                 "Daily Study Hours",
-                min_value=1,
-                max_value=12,
-                value=4,
+                min_value=1.0,
+                max_value=12.0,
+                value=4.0,
+                step=0.5,
                 help="How many hours can you study per day?"
             )
             
@@ -273,7 +316,7 @@ def generate_study_plan_page():
             days_until = (exam_date - datetime.now().date()).days
             
             if days_until <= 0:
-                st.error("Exam date must be in the future!")
+                st.error("Exam date must be in future!")
                 return
             
             # Show loading spinner
@@ -308,12 +351,7 @@ def generate_study_plan_page():
                         st.session_state.user_data['study_plan'] = study_plan
                         save_user_data(st.session_state.user_data)
                         
-                        # Check if using mock mode
-                        if 'study_tips' in study_plan and 'mock mode' in str(study_plan.get('study_tips', [])):
-                            st.info("🧪 Using Mock Mode: OpenAI API unavailable. This is a sample study plan.")
-                        else:
-                            st.success("🎉 Study plan generated successfully!")
-                        
+                        st.success("🎉 Study plan generated successfully!")
                         st.balloons()
                         
                         # Show preview
@@ -340,26 +378,22 @@ def generate_study_plan_page():
                     st.error(f"Error generating study plan: {str(e)}")
                     st.info("Please check your OpenAI API key configuration and try again.")
     
-    # Button outside the form
+    # Button outside form
     if st.session_state.study_plan:
         st.markdown("---")
-        st.write("🔧 Debug: Current page =", st.session_state.current_page)
-        
         col1, col2 = st.columns(2)
         
         with col1:
             if st.button("📊 View Full Dashboard", key="view_dashboard", width='stretch'):
-                st.write("Navigating to Dashboard...")
-                st.session_state.current_page = "Dashboard"
-                st.rerun()
+                handle_navigation("Dashboard")
         
         with col2:
-            if st.button("🧪 Force Dashboard", key="force_dashboard", width='stretch'):
-                st.session_state.current_page = "Dashboard"
-                st.rerun()
+            if st.button("🔄 Regenerate Plan", key="regenerate", width='stretch'):
+                handle_navigation("Generate Study Plan")
 
+# Dashboard page (enhanced with daily activities)
 def dashboard_page():
-    """Dashboard showing the study plan"""
+    """Enhanced dashboard with daily activities"""
     st.title("📊 Study Dashboard")
     
     if not st.session_state.study_plan:
@@ -398,9 +432,6 @@ def dashboard_page():
         
         # Show complete hourly schedule
         if 'daily_schedule' in plan and plan['daily_schedule']:
-            schedule_df = pd.DataFrame(plan['daily_schedule'])
-            
-            # Create timeline visualization
             for activity in plan['daily_schedule']:
                 category = activity.get('category', 'General')
                 emoji = {
@@ -445,30 +476,20 @@ def dashboard_page():
             # Create schedule dataframe
             tasks_df = pd.DataFrame(plan['daily_tasks'])
             
-            # Add completion status
-            if 'completed' not in tasks_df.columns:
-                tasks_df['completed'] = False
-            
             # Display tasks with checkboxes
             for i, task in tasks_df.iterrows():
                 task_key = f"task_{i}"
-                
-                # Initialize task completion state if not exists
-                if task_key not in st.session_state.task_completion:
-                    st.session_state.task_completion[task_key] = task.get('completed', False)
                 
                 col1, col2, col3, col4 = st.columns([0.1, 0.4, 0.3, 0.2])
                 
                 with col1:
                     completed = st.checkbox(
                         "",
-                        value=st.session_state.task_completion[task_key],
+                        value=st.session_state.task_completion.get(task_key, task.get('completed', False)),
                         key=task_key
                     )
-                    # Update completion status in both session state and plan
-                    st.session_state.task_completion[task_key] = completed
-                    if st.session_state.study_plan and 'daily_tasks' in st.session_state.study_plan:
-                        st.session_state.study_plan['daily_tasks'][i]['completed'] = completed
+                    # Update completion status
+                    handle_task_completion(task_key, completed)
                 
                 with col2:
                     st.write(f"**{task.get('subject', 'N/A')}**")
@@ -483,17 +504,6 @@ def dashboard_page():
                     st.write(f"📝 {task['description']}")
                 
                 st.markdown("---")
-            
-            # Save updated progress
-            if st.button("💾 Save Progress", key="save_progress"):
-                # Update user data with current study plan
-                st.session_state.user_data['study_plan'] = st.session_state.study_plan
-                success = save_user_data(st.session_state.user_data)
-                if success:
-                    st.success("✅ Progress saved successfully!")
-                    st.balloons()
-                else:
-                    st.error("❌ Failed to save progress. Please try again.")
         else:
             st.info("No study tasks scheduled.")
     
@@ -513,7 +523,7 @@ def dashboard_page():
         # Create activity chart
         activities_df = pd.DataFrame(list(activities.items()), columns=['Activity', 'Hours'])
         
-        # Pie chart for daily activities
+        # Pie chart
         fig = px.pie(
             activities_df,
             values='Hours',
@@ -547,7 +557,7 @@ def dashboard_page():
             st.markdown("""
             <div class="feature-card">
                 <h4>🏃 Physical Activity</h4>
-                <p>Exercise improves blood flow to the brain and enhances cognitive function.</p>
+                <p>Exercise improves blood flow to brain and enhances cognitive function.</p>
             </div>
             """, unsafe_allow_html=True)
             
@@ -593,6 +603,7 @@ def dashboard_page():
         if st.button("🔄 Regenerate Plan", key="regenerate"):
             handle_navigation("Generate Study Plan")
 
+# Progress tracker page
 def progress_tracker_page():
     """Progress tracking page"""
     st.title("📈 Progress Tracker")
@@ -604,36 +615,37 @@ def progress_tracker_page():
     plan = st.session_state.study_plan
     
     # Calculate progress
-    total_tasks = len(plan.get('daily_tasks', []))
-    completed_tasks = sum(1 for task in plan.get('daily_tasks', []) if task.get('completed', False))
-    progress_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
-    
-    # Progress overview
     st.subheader("📊 Overall Progress")
     
     # Progress bar
-    st.progress(progress_percentage / 100)
-    st.write(f"**{completed_tasks} of {total_tasks} tasks completed ({progress_percentage:.1f}%)**")
-    
-    # Progress metrics
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Completed Tasks", completed_tasks)
-    with col2:
-        st.metric("Remaining Tasks", total_tasks - completed_tasks)
-    with col3:
-        st.metric("Study Streak", "5 days")  # This could be calculated from user data
-    
-    st.markdown("---")
-    
-    # Task completion by subject
     if 'daily_tasks' in plan and plan['daily_tasks']:
-        st.subheader("� Progress by Subject")
+        tasks = plan['daily_tasks']
+        completed_tasks = [task for task in tasks if task.get('completed', False)]
+        total_tasks = len(tasks)
+        completed_count = len(completed_tasks)
+        progress_percentage = (completed_count / total_tasks * 100) if total_tasks > 0 else 0
+        
+        st.progress(progress_percentage / 100)
+        st.write(f"**{completed_count} of {total_tasks} tasks completed ({progress_percentage:.1f}%)**")
+        
+        # Progress metrics
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Completed Tasks", completed_count)
+        with col2:
+            st.metric("Remaining Tasks", total_tasks - completed_count)
+        with col3:
+            st.metric("Study Streak", "5 days")  # This could be calculated from user data
+        
+        st.markdown("---")
+        
+        # Task completion by subject
+        st.subheader("📚 Progress by Subject")
         
         # Group tasks by subject
         subject_progress = {}
-        for task in plan['daily_tasks']:
+        for task in tasks:
             subject = task.get('subject', 'Unknown')
             if subject not in subject_progress:
                 subject_progress[subject] = {'total': 0, 'completed': 0}
@@ -666,28 +678,27 @@ def progress_tracker_page():
         
         # Progress table
         st.dataframe(progress_df, width='stretch')
-    
-    st.markdown("---")
-    
-    # Recent activity
-    st.subheader("🕐 Recent Activity")
-    
-    # Show recently completed tasks
-    completed_tasks_list = [task for task in plan.get('daily_tasks', []) if task.get('completed', False)]
-    
-    if completed_tasks_list:
-        # Sort by completion time (if available) or just show last 5
-        recent_tasks = completed_tasks_list[-5:]
         
-        for task in reversed(recent_tasks):
-            st.markdown(f"""
-            <div class="completed-task">
-                ✅ **{task.get('subject', 'N/A')}** - {task.get('description', 'Task completed')}
-            </div>
-            """, unsafe_allow_html=True)
+        # Recent activity
+        st.markdown("---")
+        st.subheader("🕐 Recent Activity")
+        
+        # Show recently completed tasks
+        completed_tasks = [task for task in tasks if task.get('completed', False)]
+        
+        if completed_tasks:
+            for task in completed_tasks[:5]:  # Show last 5
+                st.markdown(f"""
+                <div class="completed-task">
+                    ✅ **{task.get('description', 'N/A')}** - Completed
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("No tasks completed yet. Start studying to see your progress here.")
     else:
-        st.info("No tasks completed yet. Start studying to see your progress here!")
+        st.info("No tasks available in study plan.")
 
+# Analytics page
 def analytics_page():
     """Analytics and visualization page"""
     st.title("📊 Study Analytics")
@@ -752,15 +763,15 @@ def analytics_page():
 
 # Main application logic
 def main():
+    """Main application with enhanced features"""
+    # Load CSS
+    load_css()
+    
+    # Initialize session state
+    init_session_state()
+    
     # Sidebar navigation
     sidebar_navigation()
-    
-    # Debug information (remove in production)
-    if st.sidebar.checkbox("🔧 Debug Mode", key="debug_mode"):
-        st.sidebar.markdown("### Debug Information")
-        st.sidebar.write(f"Current Page: {st.session_state.current_page}")
-        st.sidebar.write(f"Study Plan Exists: {st.session_state.study_plan is not None}")
-        st.sidebar.write(f"Task Completion Keys: {list(st.session_state.task_completion.keys())}")
     
     # Page content based on selection
     if st.session_state.current_page == "Home":
